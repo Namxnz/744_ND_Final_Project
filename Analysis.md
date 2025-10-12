@@ -64,6 +64,8 @@ tcb$Cluster[!is.na(tcb$ReturnZ)] <- gmm_model$classification
 tcb$ManipProb <- NA
 tcb$ManipProb[!is.na(tcb$ReturnZ)] <- apply(gmm_model$z, 1, max)
 ```
+![GMM model](plot.png)
+
 
 ### Step 4: Find sudden regime shift that might indicate manipulation burst
 
