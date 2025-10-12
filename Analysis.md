@@ -21,7 +21,9 @@ tcb <- tcb %>%
          High = high,
          Low  = low,
          Close = close,
-         Volume = volume) %>%
+         Volume = volume.million.,
+         PctChange = percent.change
+) %>%
   mutate(
     Date = ymd(Date),
     Volume = as.numeric(gsub(",", "", Volume)),
