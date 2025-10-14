@@ -77,6 +77,10 @@ cp_volume <- cpt.meanvar(tcb$Volume, method = "PELT")
 plot(cp_return, main = "Change Points in Returns")
 plot(cp_volume, main = "Change Points in Volume")
 
+# Extract change-point indices
+cp_return_pts <- cpts(cp_return)
+cp_volume_pts <- cpts(cp_volume)
+
 ```
 
 ### Step 5: Identify suspicious period by combining mixture model & change point output
@@ -89,6 +93,19 @@ print(suspicious %>% select(Date, Close, Volume, ManipProb))
 
 ### Step 6: Visualize
 ```{r}
+# Plot Returns with change points
+plot(tcb$Date, tcb$Return, type = "l", col = "black",
+     main = "Returns with Change Points", xlab = "Date", ylab = "Return")
+abline(v = tcb$Date[cp_return_pts], col = "red", lwd = 2, lty = 2)  # vertical red lines
+legend("topright", legend = "Detected Change Points", col = "red", lwd = 2, lty = 2)
+
+# Plot Volume with change points
+plot(tcb$Date, tcb$Volume, type = "l", col = "darkgrey",
+     main = "Volume with Change Points", xlab = "Date", ylab = "Volume")
+abline(v = tcb$Date[cp_volume_pts], col = "blue", lwd = 2, lty = 2)
+legend("topright", legend = "Detected Change Points", col = "blue", lwd = 2, lty = 2)
+
+# Final result
 library(ggplot2)
 
 ggplot(tcb, aes(Date, Close)) +
