@@ -80,8 +80,11 @@ plot(cp_volume, main = "Change Points in Volume")
 # Extract change-point indices
 cp_return_pts <- cpts(cp_return)
 cp_volume_pts <- cpts(cp_volume)
-
+cp_all <- sort(unique(c(cp_return_pts, cp_volume_pts)))
 ```
+![Return Point Change](Data/tcb_return_change.png)
+
+![Volume Point Change](Data/TCB_volume_change.png)
 
 ### Step 5: Identify suspicious period by combining mixture model & change point output
 ```{r}
@@ -89,28 +92,52 @@ suspicious <- tcb %>%
   filter(ManipProb > 0.8 | Date %in% cpts(cp_volume) | Date %in% cpts(cp_return))
 
 print(suspicious %>% select(Date, Close, Volume, ManipProb))
+
+# Combine change point with clustering
+periods <- data.frame(
+  start = c(min(tcb$Date), tcb$Date[cp_all]),
+  end   = c(tcb$Date[cp_all], max(tcb$Date))
+)
+
+periods <- data.frame(
+  start = c(min(tcb$Date), tcb$Date[cp_all]),
+  end   = c(tcb$Date[cp_all], max(tcb$Date))
+)
+
+tcb$Regime <- cut(
+  tcb$Date,
+  breaks = c(min(tcb$Date), tcb$Date[cp_all], max(tcb$Date)),
+  include.lowest = TRUE,
+  labels = paste0("R", seq_len(length(cp_all) + 1))
+)
+
+regime_summary <- aggregate(Cluster ~ Regime, data = tcb, 
+                            FUN = function(x) names(sort(table(x), decreasing = TRUE))[1])
+
+
+prop_table <- as.data.frame.matrix(
+  with(tcb, table(Regime, Cluster))
+)
+prop_table <- prop_table / rowSums(prop_table)
+
+# combine and interprete
+final_summary <- merge(periods, regime_summary, by.x = "row.names", by.y = "Regime")
+colnames(final_summary) <- c("Regime", "Start", "End", "DominantCluster")
 ```
 
 ### Step 6: Visualize
 ```{r}
-# Plot Returns with change points
-plot(tcb$Date, tcb$Return, type = "l", col = "black",
-     main = "Returns with Change Points", xlab = "Date", ylab = "Return")
-abline(v = tcb$Date[cp_return_pts], col = "red", lwd = 2, lty = 2)  # vertical red lines
-legend("topright", legend = "Detected Change Points", col = "red", lwd = 2, lty = 2)
-
-# Plot Volume with change points
-plot(tcb$Date, tcb$Volume, type = "l", col = "darkgrey",
-     main = "Volume with Change Points", xlab = "Date", ylab = "Volume")
-abline(v = tcb$Date[cp_volume_pts], col = "blue", lwd = 2, lty = 2)
-legend("topright", legend = "Detected Change Points", col = "blue", lwd = 2, lty = 2)
 
 # Final result
-library(ggplot2)
-
-ggplot(tcb, aes(Date, Close)) +
-  geom_line() +
-  geom_point(data = suspicious, aes(y = Close), color = "red", size = 2) +
-  labs(title = "TCB Potential Manipulation Points",
-       subtitle = "Red = detected anomalies")
+plot(tcb$Date, tcb$Close, type = "l", col = "black",
+     main = "Price with Change Points in Return & Volume",
+     xlab = "Date", ylab = "Close Price")
+abline(v = tcb$Date[cp_return_pts], col = "red", lwd = 2, lty = 2)
+abline(v = tcb$Date[cp_volume_pts], col = "blue", lwd = 2, lty = 3)
+legend("topright",
+       legend = c("Return CP", "Volume CP"),
+       col = c("red", "blue"),
+       lwd = 2, lty = c(2,3))
 ```
+
+![TCB History Point Change and Return](Data/tcb_price_w_cp_in_return_and_volume.png)
