@@ -141,3 +141,48 @@ legend("topright",
 ```
 
 ![TCB History Point Change and Return](Data/tcb_price_w_cp_in_return_and_volume.png)
+
+### Step 7: Pinpoint Cluster 1 regime, indentify and confirm manipulation behaviors
+
+```{r}
+# Create a timeline regime for tcb:
+tcb$Regime <- cut(tcb$Date,
+                  breaks = c(min(tcb$Date), sort(tcb$Date[cp_all]), max(tcb$Date)),
+                  include.lowest = TRUE,
+                  labels = paste0("R", seq_along(cp_all) + 1))
+
+# Create the cluster-regime table
+library(dplyr)
+
+cluster_by_regime <- tcb %>%
+  filter(!is.na(Regime), !is.na(Cluster)) %>%
+  group_by(Regime, Cluster) %>%
+  summarise(Count = n(), .groups = 'drop') %>%
+  group_by(Regime) %>%
+  mutate(Share = Count / sum(Count)) %>%
+  ungroup()
+# Identify regimes dominated by the suspicious cluster(1)
+manip_regimes <- cluster_by_regime %>%
+  filter(Cluster == 1) %>%
+  arrange(desc(Share)) %>%
+  head(10)
+
+manip_regimes
+
+# Attach date ranges to those regimes
+# Get regime boundaries
+regime_boundaries <- data.frame(
+  Regime = levels(tcb$Regime),
+  Start = as.Date(c(min(tcb$Date), sort(tcb$Date[cp_all]))),
+  End = as.Date(c(sort(tcb$Date[cp_all]), max(tcb$Date)))
+)
+
+# Join to manipulative regimes
+manip_periods <- left_join(manip_regimes, regime_boundaries, by = "Regime")
+manip_periods
+
+
+# Result
+manip_periods
+
+```
