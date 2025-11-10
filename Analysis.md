@@ -186,3 +186,16 @@ manip_periods
 manip_periods
 
 ```
+| **Regime**  | **Date Range**          | **Dominant Cluster** | **Share** | **Interpretation**                                                  |
+| ----------- | ----------------------- | -------------------- | --------- | ------------------------------------------------------------------- |
+| **R16**     | 2019-04-24 → 2019-05-02 | 1                    | 0.67      | High-volume selloff — possible insider exit or distribution phase   |
+| **R21**     | 2019-06-10 → 2019-06-13 | 1                    | 0.67      | Short manipulation window — maybe pre-earnings positioning          |
+| **R38**     | 2020-06-23 → 2020-07-08 | 1                    | 0.55      | Volume surge after COVID-crash recovery — possible speculative wave |
+| **R3–R4**   | 2018-08-13 → 2018-08-21 | 1                    | 0.50      | Initial manipulation-like burst during early observation window     |
+| **R9**      | 2019-01-07 → 2019-01-09 | 1                    | 0.50      | Short-term volume distortion — may be year-start repositioning      |
+| **R25–R29** | 2019-08-08 → 2019-10-11 | 1                    | 0.50      | Sequence of small suspicious windows over ~2 months                 |
+| **R34**     | 2020-04-23 → 2020-05-05 | 1                    | 0.50      | Early-pandemic volatility — heavy trades, price pressure            |
+
+
+
+
