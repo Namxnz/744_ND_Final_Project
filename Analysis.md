@@ -197,5 +197,83 @@ manip_periods
 | **R34**     | 2020-04-23 → 2020-05-05 | 1                    | 0.50      | Early-pandemic volatility — heavy trades, price pressure            |
 
 
+### Step 8: Compute an overall "Manipu;lation Probability" time series
+```{r}
+library(dplyr)
+library(zoo)
 
+# Set rolling window size (in trading days)
+window_size <- 20  
 
+tcb <- tcb %>%
+  arrange(Date) %>%
+  mutate(
+    ManipProb = rollapply(
+      data = (Cluster == 1) * 1,  # 1 if Cluster 1, else 0
+      width = window_size,
+      FUN = mean,
+      align = "right",
+      fill = NA
+    )
+  )
+
+library(ggplot2)
+
+ggplot(tcb, aes(x = Date, y = ManipProb)) +
+  geom_line(color = "red", size = 1) +
+  geom_smooth(span = 0.1, se = FALSE, color = "black", linetype = "dashed") +
+  labs(
+    title = "Rolling Manipulation Probability (Cluster 1 Share Over Time)",
+    subtitle = paste0("Window size: ", window_size, " trading days"),
+    x = "Date",
+    y = "Manipulation Probability"
+  ) +
+  theme_minimal(base_size = 13)
+
+threshold <- 0.6
+
+ggplot(tcb, aes(x = Date, y = ManipProb)) +
+  geom_line(color = "red") +
+  geom_hline(yintercept = threshold, linetype = "dashed", color = "black") +
+  geom_ribbon(
+    aes(ymin = 0, ymax = ifelse(ManipProb > threshold, ManipProb, NA)),
+    fill = "red", alpha = 0.2
+  ) +
+  labs(
+    title = "Manipulation Probability Zones",
+    subtitle = paste0("Highlighted when ManipProb > ", threshold),
+    y = "Manipulation Probability",
+    x = "Date"
+  ) +
+  theme_minimal(base_size = 13)
+
+library(dplyr)
+library(zoo)
+library(ggplot2)
+
+# --- Step 1: Ensure date is in Date format ---
+tcb <- tcb %>%
+  mutate(Date = as.Date(Date)) %>%
+  arrange(Date)
+
+# --- Step 2: Compute rolling Cluster 1 share ---
+# For example, use a 20-day rolling window
+window_size <- 20
+
+rolling_prob <- tcb %>%
+  mutate(IsManip = ifelse(Cluster == 1, 1, 0)) %>%
+  mutate(ManipProb = rollapply(IsManip, width = window_size, FUN = mean, align = "right", fill = NA)) %>%
+  select(Date, ManipProb)
+
+# --- Step 3: Plot the rolling manipulation probability ---
+ggplot(rolling_prob, aes(x = Date, y = ManipProb)) +
+  geom_line(color = "red", size = 1) +
+  geom_smooth(se = FALSE, color = "blue", linetype = "dashed") +
+  labs(
+    title = paste("Rolling Manipulation Probability (", window_size, "-Day Window)", sep=""),
+    y = "Probability (Cluster 1 Share)",
+    x = "Date"
+  ) +
+  theme_minimal()
+```
+![TCB History Point Change and Return](Data/Rolling_manipulation_probability.png)
