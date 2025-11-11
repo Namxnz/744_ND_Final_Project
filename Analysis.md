@@ -276,4 +276,4 @@ ggplot(rolling_prob, aes(x = Date, y = ManipProb)) +
   ) +
   theme_minimal()
 ```
-![TCB History Point Change and Return](Data/Rolling_manipulation_probability.png)
+![TCB History Point Change and Return](Data/rolling_manu.png)
