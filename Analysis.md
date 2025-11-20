@@ -277,3 +277,58 @@ ggplot(rolling_prob, aes(x = Date, y = ManipProb)) +
   theme_minimal()
 ```
 ![TCB History Point Change and Return](Data/rolling_manu.png)
+
+### Step 9: prediction for the next manipulation
+```{r}
+# install.packages("depmixS4")
+library(depmixS4)
+library(dplyr)
+
+# Prepare observation matrix (use standardized features)
+obs <- tcb %>% arrange(Date) %>% select(ReturnZ, VolumeZ, VolatilityZ) %>% na.omit()
+
+# Fit HMM with 3 states (adjust #states if needed)
+n_states <- 3
+mod <- depmix(response = list(ReturnZ ~ 1, VolumeZ ~ 1, VolatilityZ ~ 1),
+              data = obs,
+              nstates = n_states,
+              family = list(gaussian(), gaussian(), gaussian()))
+set.seed(123)
+fm <- fit(mod)
+
+# Get most likely state for each day (Viterbi)
+viterbi_states <- posterior(fm)$state
+
+# Map HMM state number -> your cluster labels (match by means)
+state_means <- posterior(fm) %>%
+  group_by(state) %>%
+  summarise(meanR = mean(ReturnZ), meanV = mean(VolumeZ), meanVol = mean(VolatilityZ))
+
+print(state_means)
+# Decide which HMM state corresponds to 'manipulative' (highest meanV or pattern akin to Cluster1)
+
+# Monte Carlo forward simulation from last observed state
+Nsim <- 5000
+horizon <- 10   # days ahead
+start_state <- tail(viterbi_states, 1)  # most recent state
+sim_manip_counts <- numeric(horizon)
+
+# Extract transition matrix and state emission params
+trMat <- getpars(fm)  # tricky: getpars contains params; easier with slot access:
+trans_probs <- matrix(getpars(fm)[which_transition_indices], n_states, n_states) 
+# (detail: parsing getpars can be fiddly; depmixS4 has functions to access transition probs)
+
+# Simulate using posterior estimated params (approximate MLE MC)
+for (i in 1:Nsim) {
+  s <- start_state
+  for (t in 1:horizon) {
+    s <- sample(1:n_states, 1, prob = trans_probs[s, ])
+    # record whether s is mapped to manipulative
+    sim_manip_counts[t] <- sim_manip_counts[t] + (s == manip_state_index)
+  }
+}
+manip_prob_est <- sim_manip_counts / Nsim
+data.frame(day = 1:horizon, P_manip = manip_prob_est)
+```
+
+
