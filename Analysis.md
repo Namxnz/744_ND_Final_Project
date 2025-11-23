@@ -308,29 +308,56 @@ state_means <- posterior(fm) %>%
 
 print(state_means)
 # Decide which HMM state corresponds to 'manipulative' (highest meanV or pattern akin to Cluster1)
+resp_models <- fm@response
 
-# Monte Carlo forward simulation from last observed state
-Nsim <- 5000
-horizon <- 10   # days ahead
-start_state <- tail(viterbi_states, 1)  # most recent state
-sim_manip_counts <- numeric(horizon)
+state_means <- matrix(0, n_states, 3)
+state_sds   <- matrix(0, n_states, 3)
 
-# Extract transition matrix and state emission params
-trMat <- getpars(fm)  # tricky: getpars contains params; easier with slot access:
-trans_probs <- matrix(getpars(fm)[which_transition_indices], n_states, n_states) 
-# (detail: parsing getpars can be fiddly; depmixS4 has functions to access transition probs)
-
-# Simulate using posterior estimated params (approximate MLE MC)
-for (i in 1:Nsim) {
-  s <- start_state
-  for (t in 1:horizon) {
-    s <- sample(1:n_states, 1, prob = trans_probs[s, ])
-    # record whether s is mapped to manipulative
-    sim_manip_counts[t] <- sim_manip_counts[t] + (s == manip_state_index)
+for(s in 1:n_states){
+  for(j in 1:3){
+    pars <- resp_models[[s]][[j]]@parameters
+    
+    # Mean = first element of coefficients
+    state_means[s, j] <- pars$coefficients[1]
+    
+    # SD
+    state_sds[s, j]   <- pars$sd
   }
 }
-manip_prob_est <- sim_manip_counts / Nsim
-data.frame(day = 1:horizon, P_manip = manip_prob_est)
+
+colnames(state_means) <- c("ReturnZ", "VolumeZ", "VolatilityZ")
+colnames(state_sds)   <- c("ReturnZ", "VolumeZ", "VolatilityZ")
+
+state_means
+state_sds
+# Monte Carlo forward simulation from last observed state
+set.seed(123)
+
+Nsim <- 5000
+horizon <- 20   # days ahead
+
+# Last observed hidden state
+start_state <- tail(viterbi_states, 1)
+
+# Transition matrix
+trans <- matrix(getpars(fm)[(n_states+1):(n_states + n_states^2)], 
+                nrow = n_states, byrow = TRUE)
+
+# For storing simulation results
+sim_states <- matrix(0, nrow=Nsim, ncol=horizon)
+
+for(sim in 1:Nsim){
+    s <- start_state
+    for(t in 1:horizon){
+        # draw next state from multinomial
+        s <- sample(1:n_states, size=1, prob = trans[s, ])
+        sim_states[sim, t] <- s
+    }
+}
+
+# Probability of manipulation on each future day
+manip_prob <- colMeans(sim_states == 2)   # state 2 = manipulation
+manip_prob
 ```
 
 
