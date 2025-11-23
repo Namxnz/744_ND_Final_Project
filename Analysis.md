@@ -359,6 +359,28 @@ for(sim in 1:Nsim){
 manip_prob <- colMeans(sim_states == 2)   # state 2 = manipulation
 manip_prob
 ```
+#### Final prediction graph
+```{r}
+# Create a forecast data frame
+forecast_df <- data.frame(
+  DayAhead = 1:length(manip_prob),
+  ManipProb = manip_prob
+)
+
+# Plot
+library(ggplot2)
+
+ggplot(forecast_df, aes(x = DayAhead, y = ManipProb)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  geom_hline(yintercept = 0.10, linetype = "dashed", color = "red") +
+  labs(
+    title = "20-Day Manipulation Probability Forecast",
+    x = "Days Ahead",
+    y = "Probability"
+  ) +
+  theme_minimal(base_size = 15)
+```
 ![GMM model](Data/20day_mani_forecast.png)
 
 
