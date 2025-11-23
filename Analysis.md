@@ -359,5 +359,6 @@ for(sim in 1:Nsim){
 manip_prob <- colMeans(sim_states == 2)   # state 2 = manipulation
 manip_prob
 ```
+![GMM model](Data/20day_mani_forecast.png)
 
 
