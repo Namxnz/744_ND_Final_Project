@@ -288,6 +288,8 @@ library(dplyr)
 obs <- tcb %>% arrange(Date) %>% select(ReturnZ, VolumeZ, VolatilityZ) %>% na.omit()
 
 # Fit HMM with 3 states (adjust #states if needed)
+post <- posterior(fm)   # contains 'state'
+tcb_states <- cbind(tcb, state = post$state)
 n_states <- 3
 mod <- depmix(response = list(ReturnZ ~ 1, VolumeZ ~ 1, VolatilityZ ~ 1),
               data = obs,
