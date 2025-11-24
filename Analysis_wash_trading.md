@@ -151,3 +151,4 @@ if("Regime" %in% names(tcb)){
   print(head(regime_summary, 30))
 }
 ```
+![GMM model](Data/wash.png)
