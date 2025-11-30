@@ -9,20 +9,20 @@ library(mclust)       # For Gaussian Mixture Models
 library(changepoint)  # For regime change detection
 
 # Load your dataset
-tcb <- read_csv("TCB_2018_2025.csv")
+vic <- read_csv("VIC_2018_2025.csv")
 
 # Inspect
-glimpse(tcb)
+glimpse(vic)
 
 # Clean and format
-tcb <- tcb %>%
+vic <- vic %>%
   rename(Date = date,
          Open = open,
          High = high,
          Low  = low,
          Close = close,
-         Volume = volume.million.,
-         PctChange = percent.change
+         Volume = volume,
+         PctChange = percentChange
 ) %>%
   mutate(
     Date = ymd(Date),
@@ -38,7 +38,7 @@ tcb <- tcb %>%
 ## Step 2: Create  indicators that highlight unusual trading patterns
 
 ```{r}
-tcb <- tcb %>%
+vic <- vic %>%
   mutate(
     VolumeZ = scale(Volume),
     ReturnZ = scale(Return),
@@ -50,7 +50,7 @@ tcb <- tcb %>%
 ## Step 3: Fit Bayesian model to detect latent normal vs maniplated regimes using Gaussian Mixture Models
 ```{r}
 # Use standardized features
-X <- tcb %>% select(ReturnZ, VolumeZ, VolatilityZ) %>% na.omit()
+X <- vic %>% select(ReturnZ, VolumeZ, VolatilityZ) %>% na.omit()
 
 # Fit a mixture model (Bayesian information used automatically)
 gmm_model <- Mclust(X, G = 1:4)  # Try 1–4 clusters
@@ -59,10 +59,10 @@ summary(gmm_model)
 plot(gmm_model, what = "classification")
 
 # Add cluster assignments and probabilities
-tcb$Cluster <- NA
-tcb$Cluster[!is.na(tcb$ReturnZ)] <- gmm_model$classification
-tcb$ManipProb <- NA
-tcb$ManipProb[!is.na(tcb$ReturnZ)] <- apply(gmm_model$z, 1, max)
+vic$Cluster <- NA
+vic$Cluster[!is.na(tcb$ReturnZ)] <- gmm_model$classification
+vic$ManipProb <- NA
+vic$ManipProb[!is.na(tcb$ReturnZ)] <- apply(gmm_model$z, 1, max)
 ```
 ![GMM model](Data/gmm.png)
 
@@ -71,8 +71,8 @@ tcb$ManipProb[!is.na(tcb$ReturnZ)] <- apply(gmm_model$z, 1, max)
 
 ```{r}
 # Detect change points in returns or volume
-cp_return <- cpt.meanvar(tcb$Return, method = "PELT")
-cp_volume <- cpt.meanvar(tcb$Volume, method = "PELT")
+cp_return <- cpt.meanvar(vic$Return, method = "PELT")
+cp_volume <- cpt.meanvar(vic$Volume, method = "PELT")
 
 plot(cp_return, main = "Change Points in Returns")
 plot(cp_volume, main = "Change Points in Volume")
