@@ -64,7 +64,7 @@ vic$Cluster[!is.na(vic$ReturnZ)] <- gmm_model$classification
 vic$ManipProb <- NA
 vic$ManipProb[!is.na(vic$ReturnZ)] <- apply(gmm_model$z, 1, max)
 ```
-![GMM model](Data/gmm.png)
+![GMM model](Data/vic_cluster.png)
 
 
 ### Step 4: Find sudden regime shift that might indicate manipulation burst
@@ -82,9 +82,9 @@ cp_return_pts <- cpts(cp_return)
 cp_volume_pts <- cpts(cp_volume)
 cp_all <- sort(unique(c(cp_return_pts, cp_volume_pts)))
 ```
-![Return Point Change](Data/tcb_return_change.png)
+![Return Point Change](Data/vic_change_return.png)
 
-![Volume Point Change](Data/TCB_volume_change.png)
+![Volume Point Change](Data/vic_change_volume.png)
 
 ### Step 5: Identify suspicious period by combining mixture model & change point output
 ```{r}
@@ -135,7 +135,7 @@ legend("topright",
        lwd = 2, lty = c(2,3))
 ```
 
-![TCB History Point Change and Return](Data/tcb_price_w_cp_in_return_and_volume.png)
+![TCB History Point Change and Return](Data/vic_change_R_V.png)
 
 ### Step 7: Pinpoint Cluster regime, indentify and confirm manipulation behaviors
 
